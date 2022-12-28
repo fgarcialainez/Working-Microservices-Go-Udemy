@@ -1,6 +1,9 @@
 {
 	"folders": [
 		{
+			"path": "authentication-service"
+		},
+		{
 			"path": "broker-service"
 		},
 		{
@@ -8,7 +11,7 @@
 		},
 		{
 			"path": "project"
-		}
+		},
 	],
 	"settings": {}
 }

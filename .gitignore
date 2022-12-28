@@ -14,9 +14,13 @@
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
-# Generated Binaries
+# Generated binaries
+authApp
 brokerApp
 frontApp
+
+# Postgres volume
+db-data/
 
 # macOS noise
 .DS_Store
