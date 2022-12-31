@@ -18,6 +18,7 @@
 authApp
 brokerApp
 frontApp
+loggerApp
 
 # Postgres volume
 db-data/
