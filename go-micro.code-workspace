@@ -10,8 +10,11 @@
 			"path": "front-end"
 		},
 		{
-			"path": "project"
+			"path": "logger-service"
 		},
+		{
+			"path": "project"
+		}
 	],
 	"settings": {}
 }
