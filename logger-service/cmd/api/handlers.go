@@ -3,6 +3,8 @@ package main
 import (
 	"logger-service/data"
 	"net/http"
+
+	"github.com/tsawler/toolbox"
 )
 
 type JSONPayload struct {
@@ -13,7 +15,7 @@ type JSONPayload struct {
 func (app *Config) WriteLog(w http.ResponseWriter, r *http.Request) {
 	// read json into var
 	var requestPayload JSONPayload
-	_ = app.readJSON(w, r, &requestPayload)
+	_ = app.Tools.ReadJSON(w, r, &requestPayload)
 
 	// insert data
 	event := data.LogEntry{
@@ -23,14 +25,14 @@ func (app *Config) WriteLog(w http.ResponseWriter, r *http.Request) {
 
 	err := app.Models.LogEntry.Insert(event)
 	if err != nil {
-		app.errorJSON(w, err)
+		app.Tools.ErrorJSON(w, err)
 		return
 	}
 
-	resp := jsonResponse{
+	resp := toolbox.JSONResponse{
 		Error:   false,
 		Message: "logged",
 	}
 
-	app.writeJSON(w, http.StatusAccepted, resp)
+	app.Tools.WriteJSON(w, http.StatusAccepted, resp)
 }

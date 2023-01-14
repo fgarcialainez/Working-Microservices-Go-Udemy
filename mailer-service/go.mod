@@ -15,6 +15,7 @@ require (
 	github.com/go-test/deep v1.1.0 // indirect
 	github.com/gorilla/css v1.0.0 // indirect
 	github.com/toorop/go-dkim v0.0.0-20201103131630-e1cd1a0a5208 // indirect
+	github.com/tsawler/toolbox v1.1.7 // indirect
 	github.com/vanng822/css v1.0.1 // indirect
 	golang.org/x/net v0.0.0-20200904194848-62affa334b73 // indirect
 )

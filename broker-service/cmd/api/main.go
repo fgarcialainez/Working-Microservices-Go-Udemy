@@ -4,11 +4,15 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+
+	"github.com/tsawler/toolbox"
 )
 
 const webPort = "80"
 
-type Config struct {}
+type Config struct {
+	Tools toolbox.Tools
+}
 
 func main() {
 	app := Config{}
@@ -17,7 +21,7 @@ func main() {
 
 	// define http server
 	srv := &http.Server{
-		Addr: fmt.Sprintf(":%s", webPort),
+		Addr:    fmt.Sprintf(":%s", webPort),
 		Handler: app.routes(),
 	}
 

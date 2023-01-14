@@ -6,10 +6,13 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+
+	"github.com/tsawler/toolbox"
 )
 
 type Config struct {
 	Mailer Mail
+	Tools  toolbox.Tools
 }
 
 const webPort = "80"

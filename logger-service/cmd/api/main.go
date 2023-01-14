@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/tsawler/toolbox"
+
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -23,6 +25,7 @@ var client *mongo.Client
 
 type Config struct {
 	Models data.Models
+	Tools  toolbox.Tools
 }
 
 func main() {

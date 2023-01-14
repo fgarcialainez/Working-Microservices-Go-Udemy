@@ -9,6 +9,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/tsawler/toolbox"
+
 	_ "github.com/jackc/pgconn"
 	_ "github.com/jackc/pgx/v4"
 	_ "github.com/jackc/pgx/v4/stdlib"
@@ -21,6 +23,7 @@ var counts int64
 type Config struct {
 	DB     *sql.DB
 	Models data.Models
+	Tools  toolbox.Tools
 }
 
 func main() {

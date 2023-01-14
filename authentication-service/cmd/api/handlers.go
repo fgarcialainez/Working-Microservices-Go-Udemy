@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+
+	"github.com/tsawler/toolbox"
 )
 
 func (app *Config) Authenticate(w http.ResponseWriter, r *http.Request) {
@@ -12,30 +14,30 @@ func (app *Config) Authenticate(w http.ResponseWriter, r *http.Request) {
 		Password string `json:"password"`
 	}
 
-	err := app.readJSON(w, r, &requestPayload)
+	err := app.Tools.ReadJSON(w, r, &requestPayload)
 	if err != nil {
-		app.errorJSON(w, err, http.StatusBadRequest)
+		app.Tools.ErrorJSON(w, err, http.StatusBadRequest)
 		return
 	}
 
 	// validate the user against the database
 	user, err := app.Models.User.GetByEmail(requestPayload.Email)
 	if err != nil {
-		app.errorJSON(w, errors.New("invalid credentials"), http.StatusBadRequest)
+		app.Tools.ErrorJSON(w, errors.New("invalid credentials"), http.StatusBadRequest)
 		return
 	}
 
 	valid, err := user.PasswordMatches(requestPayload.Password)
 	if err != nil || !valid {
-		app.errorJSON(w, errors.New("invalid credentials"), http.StatusBadRequest)
+		app.Tools.ErrorJSON(w, errors.New("invalid credentials"), http.StatusBadRequest)
 		return
 	}
 
-	payload := jsonResponse{
+	payload := toolbox.JSONResponse{
 		Error:   false,
 		Message: fmt.Sprintf("Logged in user %s", user.Email),
 		Data:    user,
 	}
 
-	app.writeJSON(w, http.StatusAccepted, payload)
+	app.Tools.WriteJSON(w, http.StatusAccepted, payload)
 }

@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+
+	"github.com/tsawler/toolbox"
 )
 
 type RequestPayload struct {
@@ -32,12 +34,12 @@ type MailPayload struct {
 }
 
 func (app *Config) Broker(w http.ResponseWriter, r *http.Request) {
-	payload := jsonResponse{
+	payload := toolbox.JSONResponse{
 		Error:   false,
 		Message: "Hit the broker",
 	}
 
-	_ = app.writeJSON(w, http.StatusOK, payload)
+	_ = app.Tools.WriteJSON(w, http.StatusOK, payload)
 }
 
 // HandleSubmission is the main point of entry into the broker. It accepts a JSON
@@ -45,9 +47,9 @@ func (app *Config) Broker(w http.ResponseWriter, r *http.Request) {
 func (app *Config) HandleSubmission(w http.ResponseWriter, r *http.Request) {
 	var requestPayload RequestPayload
 
-	err := app.readJSON(w, r, &requestPayload)
+	err := app.Tools.ReadJSON(w, r, &requestPayload)
 	if err != nil {
-		app.errorJSON(w, err)
+		app.Tools.ErrorJSON(w, err)
 		return
 	}
 
@@ -59,7 +61,7 @@ func (app *Config) HandleSubmission(w http.ResponseWriter, r *http.Request) {
 	case "mail":
 		app.sendMail(w, requestPayload.Mail)
 	default:
-		app.errorJSON(w, errors.New("unknown action"))
+		app.Tools.ErrorJSON(w, errors.New("unknown action"))
 	}
 }
 
@@ -70,7 +72,7 @@ func (app *Config) logItem(w http.ResponseWriter, entry LogPayload) {
 
 	request, err := http.NewRequest("POST", logServiceURL, bytes.NewBuffer(jsonData))
 	if err != nil {
-		app.errorJSON(w, err)
+		app.Tools.ErrorJSON(w, err)
 		return
 	}
 
@@ -80,21 +82,21 @@ func (app *Config) logItem(w http.ResponseWriter, entry LogPayload) {
 
 	response, err := client.Do(request)
 	if err != nil {
-		app.errorJSON(w, err)
+		app.Tools.ErrorJSON(w, err)
 		return
 	}
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusAccepted {
-		app.errorJSON(w, err)
+		app.Tools.ErrorJSON(w, err)
 		return
 	}
 
-	var payload jsonResponse
+	var payload toolbox.JSONResponse
 	payload.Error = false
 	payload.Message = "logged"
 
-	app.writeJSON(w, http.StatusAccepted, payload)
+	app.Tools.WriteJSON(w, http.StatusAccepted, payload)
 
 }
 
@@ -106,48 +108,48 @@ func (app *Config) authenticate(w http.ResponseWriter, a AuthPayload) {
 	// call the service
 	request, err := http.NewRequest("POST", "http://authentication-service/authenticate", bytes.NewBuffer(jsonData))
 	if err != nil {
-		app.errorJSON(w, err)
+		app.Tools.ErrorJSON(w, err)
 		return
 	}
 
 	client := &http.Client{}
 	response, err := client.Do(request)
 	if err != nil {
-		app.errorJSON(w, err)
+		app.Tools.ErrorJSON(w, err)
 		return
 	}
 	defer response.Body.Close()
 
 	// make sure we get back the correct status code
 	if response.StatusCode == http.StatusUnauthorized {
-		app.errorJSON(w, errors.New("invalid credentials"))
+		app.Tools.ErrorJSON(w, errors.New("invalid credentials"))
 		return
 	} else if response.StatusCode != http.StatusAccepted {
-		app.errorJSON(w, errors.New("error calling auth service"))
+		app.Tools.ErrorJSON(w, errors.New("error calling auth service"))
 		return
 	}
 
 	// create a variable we'll read response.Body into
-	var jsonFromService jsonResponse
+	var jsonFromService toolbox.JSONResponse
 
 	// decode the json from the auth service
 	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
 	if err != nil {
-		app.errorJSON(w, err)
+		app.Tools.ErrorJSON(w, err)
 		return
 	}
 
 	if jsonFromService.Error {
-		app.errorJSON(w, err, http.StatusUnauthorized)
+		app.Tools.ErrorJSON(w, err, http.StatusUnauthorized)
 		return
 	}
 
-	var payload jsonResponse
+	var payload toolbox.JSONResponse
 	payload.Error = false
 	payload.Message = "Authenticated!"
 	payload.Data = jsonFromService.Data
 
-	app.writeJSON(w, http.StatusAccepted, payload)
+	app.Tools.WriteJSON(w, http.StatusAccepted, payload)
 }
 
 func (app *Config) sendMail(w http.ResponseWriter, msg MailPayload) {
@@ -159,7 +161,7 @@ func (app *Config) sendMail(w http.ResponseWriter, msg MailPayload) {
 	// post to mail service
 	request, err := http.NewRequest("POST", mailServiceURL, bytes.NewBuffer(jsonData))
 	if err != nil {
-		app.errorJSON(w, err)
+		app.Tools.ErrorJSON(w, err)
 		return
 	}
 
@@ -168,22 +170,21 @@ func (app *Config) sendMail(w http.ResponseWriter, msg MailPayload) {
 	client := &http.Client{}
 	response, err := client.Do(request)
 	if err != nil {
-		app.errorJSON(w, err)
+		app.Tools.ErrorJSON(w, err)
 		return
 	}
 	defer response.Body.Close()
 
 	// make sure we get back the right status code
 	if response.StatusCode != http.StatusAccepted {
-		app.errorJSON(w, errors.New("error calling mail service"))
+		app.Tools.ErrorJSON(w, errors.New("error calling mail service"))
 		return
 	}
 
 	// send back json
-	var payload jsonResponse
+	var payload toolbox.JSONResponse
 	payload.Error = false
 	payload.Message = "Message sent to " + msg.To
 
-	app.writeJSON(w, http.StatusAccepted, payload)
-
+	app.Tools.WriteJSON(w, http.StatusAccepted, payload)
 }
