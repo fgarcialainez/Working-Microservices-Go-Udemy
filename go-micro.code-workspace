@@ -13,6 +13,9 @@
 			"path": "logger-service"
 		},
 		{
+			"path": "mailer-service"
+		},
+		{
 			"path": "project"
 		}
 	],
