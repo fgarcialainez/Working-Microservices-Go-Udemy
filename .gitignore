@@ -20,8 +20,9 @@ brokerApp
 frontApp
 loggerApp
 mailerApp
+listenerApp
 
-# Postgres volume
+# Postgres, Mongo and RabbitMQ volumes
 db-data/
 
 # macOS noise

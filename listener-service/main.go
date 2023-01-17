@@ -2,22 +2,14 @@ package main
 
 import (
 	"fmt"
+	"listener/event"
 	"log"
 	"math"
-	"net/http"
 	"os"
 	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
-	"github.com/tsawler/toolbox"
 )
-
-const webPort = "80"
-
-type Config struct {
-	Tools  toolbox.Tools
-	Rabbit *amqp.Connection
-}
 
 func main() {
 	// Try to connect to rabbitmq
@@ -28,22 +20,19 @@ func main() {
 	}
 	defer rabbitConn.Close()
 
-	app := Config{
-		Rabbit: rabbitConn,
-	}
+	// Start listening for messages
+	log.Println("Listening for and consuming RabbitMQ messages...")
 
-	log.Printf("Starting broker service on port %s\n", webPort)
-
-	// define http server
-	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%s", webPort),
-		Handler: app.routes(),
-	}
-
-	// start the server
-	err = srv.ListenAndServe()
+	// Create consumer
+	consumer, err := event.NewConsumer(rabbitConn)
 	if err != nil {
-		log.Panic(err)
+		panic(err)
+	}
+
+	// Watch the queue and consume events
+	err = consumer.Listen([]string{"log.INFO", "log.WARNING", "log.ERROR"})
+	if err != nil {
+		log.Println(err)
 	}
 }
 
@@ -52,7 +41,7 @@ func connect() (*amqp.Connection, error) {
 	var backOff = 1 * time.Second
 	var connection *amqp.Connection
 
-	// don't continue until rabbit is ready
+	// Don't continue until rabbit is ready
 	for {
 		c, err := amqp.Dial("amqp://guest:guest@rabbitmq")
 		if err != nil {
@@ -70,7 +59,7 @@ func connect() (*amqp.Connection, error) {
 		}
 
 		backOff = time.Duration(math.Pow(float64(counts), 2)) * time.Second
-		log.Println("backing off...")
+		log.Println("Backing off...")
 		time.Sleep(backOff)
 		continue
 	}
