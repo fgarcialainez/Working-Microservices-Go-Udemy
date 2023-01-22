@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"log"
 	"logger-service/data"
+	"net"
 	"net/http"
+	"net/rpc"
 	"time"
 
 	"github.com/tsawler/toolbox"
@@ -29,18 +31,18 @@ type Config struct {
 }
 
 func main() {
-	// connect to mongo
+	// Connect to mongo
 	mongoClient, err := connectToMongo()
 	if err != nil {
 		log.Panic(err)
 	}
 	client = mongoClient
 
-	// create a context in order to disconnect
+	// Create a context in order to disconnect
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	// close connection
+	// Close connection
 	defer func() {
 		if err = client.Disconnect(ctx); err != nil {
 			panic(err)
@@ -51,11 +53,17 @@ func main() {
 		Models: data.New(client),
 	}
 
-	// start web server
+	// Register the RPC Server
+	err = rpc.Register(new(RPCServer))
+	go app.rpcListen()
+
+	// Start the web server
 	app.serve()
 }
 
 func (app *Config) serve() {
+	log.Println("Starting service on port", webPort)
+
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%s", webPort),
 		Handler: app.routes(),
@@ -67,15 +75,32 @@ func (app *Config) serve() {
 	}
 }
 
+func (app *Config) rpcListen() error {
+	log.Println("Starting RPC server on port ", rpcPort)
+	listen, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%s", rpcPort))
+	if err != nil {
+		return err
+	}
+	defer listen.Close()
+
+	for {
+		rpcConn, err := listen.Accept()
+		if err != nil {
+			continue
+		}
+		go rpc.ServeConn(rpcConn)
+	}
+}
+
 func connectToMongo() (*mongo.Client, error) {
-	// create connection options
+	// Create connection options
 	clientOptions := options.Client().ApplyURI(mongoURL)
 	clientOptions.SetAuth(options.Credential{
 		Username: "admin",
 		Password: "password",
 	})
 
-	// connect
+	// Connect
 	c, err := mongo.Connect(context.TODO(), clientOptions)
 	if err != nil {
 		log.Println("Error connecting:", err)

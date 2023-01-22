@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"net/rpc"
 
 	"github.com/tsawler/toolbox"
 )
@@ -59,47 +60,13 @@ func (app *Config) HandleSubmission(w http.ResponseWriter, r *http.Request) {
 		app.authenticate(w, requestPayload.Auth)
 	case "log":
 		// app.logItem(w, requestPayload.Log)
-		app.logEventViaRabbit(w, requestPayload.Log)
+		// app.logEventViaRabbit(w, requestPayload.Log)
+		app.logEventViaRPC(w, requestPayload.Log)
 	case "mail":
 		app.sendMail(w, requestPayload.Mail)
 	default:
 		app.Tools.ErrorJSON(w, errors.New("unknown action"))
 	}
-}
-
-func (app *Config) logItem(w http.ResponseWriter, entry LogPayload) {
-	jsonData, _ := json.MarshalIndent(entry, "", "\t")
-
-	logServiceURL := "http://logger-service/log"
-
-	request, err := http.NewRequest("POST", logServiceURL, bytes.NewBuffer(jsonData))
-	if err != nil {
-		app.Tools.ErrorJSON(w, err)
-		return
-	}
-
-	request.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{}
-
-	response, err := client.Do(request)
-	if err != nil {
-		app.Tools.ErrorJSON(w, err)
-		return
-	}
-	defer response.Body.Close()
-
-	if response.StatusCode != http.StatusAccepted {
-		app.Tools.ErrorJSON(w, err)
-		return
-	}
-
-	var payload toolbox.JSONResponse
-	payload.Error = false
-	payload.Message = "logged"
-
-	app.Tools.WriteJSON(w, http.StatusAccepted, payload)
-
 }
 
 // authenticate calls the authentication microservice and sends back the appropriate response
@@ -191,6 +158,42 @@ func (app *Config) sendMail(w http.ResponseWriter, msg MailPayload) {
 	app.Tools.WriteJSON(w, http.StatusAccepted, payload)
 }
 
+// logEventViaHTTP logs an event using the logger-service. It makes the call by calling logger-service via HTTP.
+func (app *Config) logEventViaHTTP(w http.ResponseWriter, entry LogPayload) {
+	jsonData, _ := json.MarshalIndent(entry, "", "\t")
+
+	logServiceURL := "http://logger-service/log"
+
+	request, err := http.NewRequest("POST", logServiceURL, bytes.NewBuffer(jsonData))
+	if err != nil {
+		app.Tools.ErrorJSON(w, err)
+		return
+	}
+
+	request.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+
+	response, err := client.Do(request)
+	if err != nil {
+		app.Tools.ErrorJSON(w, err)
+		return
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusAccepted {
+		app.Tools.ErrorJSON(w, err)
+		return
+	}
+
+	var payload toolbox.JSONResponse
+	payload.Error = false
+	payload.Message = "logged"
+
+	app.Tools.WriteJSON(w, http.StatusAccepted, payload)
+
+}
+
 // logEventViaRabbit logs an event using the logger-service. It makes the call by pushing the data to RabbitMQ.
 func (app *Config) logEventViaRabbit(w http.ResponseWriter, l LogPayload) {
 	err := app.pushToQueue(l.Name, l.Data)
@@ -224,4 +227,36 @@ func (app *Config) pushToQueue(name, msg string) error {
 		return err
 	}
 	return nil
+}
+
+// logEventViaRPC logs an event using the logger-service. It makes the call by using RPC.
+func (app *Config) logEventViaRPC(w http.ResponseWriter, l LogPayload) {
+
+	client, err := rpc.Dial("tcp", "logger-service:5001")
+	if err != nil {
+		app.Tools.ErrorJSON(w, err)
+		return
+	}
+
+	rpcPayload := struct {
+		Name string
+		Data string
+	}{
+		Name: l.Name,
+		Data: l.Data,
+	}
+
+	var result string
+	err = client.Call("RPCServer.LogInfo", rpcPayload, &result)
+	if err != nil {
+		app.Tools.ErrorJSON(w, err)
+		return
+	}
+
+	payload := toolbox.JSONResponse{
+		Error:   false,
+		Message: result,
+	}
+
+	app.Tools.WriteJSON(w, http.StatusAccepted, payload)
 }
