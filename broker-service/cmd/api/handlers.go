@@ -58,9 +58,11 @@ func (app *Config) HandleSubmission(w http.ResponseWriter, r *http.Request) {
 	switch requestPayload.Action {
 	case "auth":
 		app.authenticate(w, requestPayload.Auth)
-	case "log":
-		// app.logItem(w, requestPayload.Log)
-		// app.logEventViaRabbit(w, requestPayload.Log)
+	case "log-http":
+		app.logEventViaHTTP(w, requestPayload.Log)
+	case "log-rabbit":
+		app.logEventViaRabbit(w, requestPayload.Log)
+	case "log-rpc":
 		app.logEventViaRPC(w, requestPayload.Log)
 	case "mail":
 		app.sendMail(w, requestPayload.Mail)
@@ -188,7 +190,7 @@ func (app *Config) logEventViaHTTP(w http.ResponseWriter, entry LogPayload) {
 
 	var payload toolbox.JSONResponse
 	payload.Error = false
-	payload.Message = "logged"
+	payload.Message = "logged via HTTP"
 
 	app.Tools.WriteJSON(w, http.StatusAccepted, payload)
 
