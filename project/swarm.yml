@@ -1,6 +1,14 @@
 version: '3'
 
 services:
+  front-end:
+    image: fgarcialainez/front-end:1.0.0  
+    ports:
+      - "80:80"
+    deploy:
+      mode: replicated
+      replicas: 1
+
   broker-service:
     image: fgarcialainez/broker-service:1.0.0
     ports:
