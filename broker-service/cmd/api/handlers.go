@@ -285,7 +285,7 @@ func (app *Config) logEventViaGRPC(w http.ResponseWriter, l LogPayload) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	_, err = c.WriteLog(ctx, &logs.LogRequest{
+	resp, err := c.WriteLog(ctx, &logs.LogRequest{
 		LogEntry: &logs.Log{
 			Name: l.Name,
 			Data: l.Data,
@@ -298,7 +298,7 @@ func (app *Config) logEventViaGRPC(w http.ResponseWriter, l LogPayload) {
 
 	var payload toolbox.JSONResponse
 	payload.Error = false
-	payload.Message = "logged via gRPC"
+	payload.Message = resp.Result
 
 	app.Tools.WriteJSON(w, http.StatusAccepted, payload)
 }

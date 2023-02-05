@@ -27,6 +27,6 @@ func (l *LogServer) WriteLog(ctx context.Context, req *logs.LogRequest) (*logs.L
 	}
 
 	// return response
-	res := &logs.LogResponse{Result: "Processed payload via RPC: " + input.Name}
+	res := &logs.LogResponse{Result: "Processed payload via gRPC: " + input.Name}
 	return res, nil
 }
