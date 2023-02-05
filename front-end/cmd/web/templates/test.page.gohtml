@@ -11,6 +11,7 @@
                 <a id="logHttpBtn" class="btn btn-outline-secondary" href="javascript:void(0);">Test Log HTTP</a>
                 <a id="logRabbitBtn" class="btn btn-outline-secondary" href="javascript:void(0);">Test Log Rabbit</a>
                 <a id="logRpcBtn" class="btn btn-outline-secondary" href="javascript:void(0);">Test Log RPC</a>
+                <a id="logGrpcBtn" class="btn btn-outline-secondary" href="javascript:void(0);">Test Log gRPC</a>
                 <a id="mailBtn" class="btn btn-outline-secondary" href="javascript:void(0);">Test Mail</a>
 
                 <div id="output" class="mt-5" style="outline: 1px solid silver; padding: 2em;">
@@ -42,6 +43,7 @@
     let logHttpBtn = document.getElementById("logHttpBtn");
     let logRabbitBtn = document.getElementById("logRabbitBtn");
     let logRpcBtn = document.getElementById("logRpcBtn");
+    let logGrpcBtn = document.getElementById("logGrpcBtn");
     let output = document.getElementById("output");
     let sent = document.getElementById("payload");
     let received = document.getElementById("received");
@@ -77,6 +79,18 @@
             log: {
                 name: "event",
                 data: "Some kind of data via RPC",
+            }
+        }
+
+        sendRequest(payload);
+    })
+
+    logGrpcBtn.addEventListener("click", function() {
+        const payload = {
+            action: "log-grpc",
+            log: {
+                name: "event",
+                data: "Some kind of data via gRPC",
             }
         }
 
