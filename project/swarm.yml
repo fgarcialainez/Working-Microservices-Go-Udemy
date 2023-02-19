@@ -8,6 +8,8 @@ services:
     deploy:
       mode: replicated
       replicas: 1
+    environment:
+        BROKER_URL: "http://localhost:8080"
 
   broker-service:
     image: fgarcialainez/broker-service:1.0.0
