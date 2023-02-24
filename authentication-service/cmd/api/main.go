@@ -38,6 +38,7 @@ func main() {
 	app := Config{
 		Client: &http.Client{},
 	}
+	app.setupRepo(conn)
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%s", webPort),
